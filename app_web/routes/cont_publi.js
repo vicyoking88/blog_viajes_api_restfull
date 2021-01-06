@@ -16,6 +16,10 @@ router.get('/', (request, response) => {
     pool.getConnection(function (err, connection) {
         let consulta
         let modificadorConsulta = ""
+        let modificadorPagina = ""
+        let pagina =0
+
+
         const busqueda = (request.query.busqueda) ? request.query.busqueda : ""
         if (busqueda != "") {
             modificadorConsulta = `
@@ -24,19 +28,33 @@ router.get('/', (request, response) => {
                 resumen LIKE '%${busqueda}%' OR
                 contenido LIKE '%${busqueda}%'
                 `
+                modificadorPagina=""
         }
+
+        else{
+
+            pagina = ( request.query.pagina ) ? parseInt(request.query.pagina) : 0
+            if (pagina < 0) {
+              pagina = 0
+            }
+            modificadorPagina = `
+              LIMIT 5 OFFSET ${pagina*5}
+            `
+
+        }
+
         consulta = `
           SELECT
-          titulo, resumen, fecha_hora, pseudonimo, votos
+          publicaciones.id id, titulo, resumen, fecha_hora, pseudonimo, votos
           FROM publicaciones
           INNER JOIN autores
           ON publicaciones.autor_id = autores.id
           ${modificadorConsulta}
           ORDER BY fecha_hora DESC
-          LIMIT 5
+          ${modificadorPagina}
         `
         connection.query(consulta, function (error, filas, campos) {
-            response.render('index', { publicaciones: filas, busqueda: busqueda })
+            response.render('index', { publicaciones: filas, busqueda: busqueda, pagina: pagina })
         })
         connection.release()
     })
@@ -131,5 +149,25 @@ router.post('/procesar_inicio', function (peticion, respuesta) {
         connection.release()
     })
 })
+
+/**ruta para mostrar detalle de la publicacion al pinchar en ella */
+router.get('/publicacion/:id', (peticion, respuesta) => {
+    pool.getConnection((err, connection) => {
+      const consulta = `
+        SELECT *
+        FROM publicaciones
+        WHERE id = ${connection.escape(peticion.params.id)}
+      `
+      connection.query(consulta, (error, filas, campos) => {
+        if (filas.length > 0) {
+          respuesta.render('publicacion', { publicacion: filas[0] })
+        }
+        else {
+          respuesta.redirect('/')
+        }
+      })
+      connection.release()
+    })
+  })
 
 module.exports = router
