@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Blog Viajes</title>
-  <link rel="stylesheet" href="stylesheets/styles.css">
+  <link rel="stylesheet" href="/stylesheets/styles.css">
   <link rel="stylesheet" href="https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-default.min.css">
 </head>
 
@@ -26,7 +26,7 @@
           <%=mensaje%></h4>
         <% } %>
 
-        <form action="/procesar_registro" method="POST">
+        <form action="/procesar_registro" method="POST" enctype="multipart/form-data">
           <fieldset>
             <legend>Nuevo autor</legend>
             <p>
@@ -43,6 +43,11 @@
               <label for="pseudonimo">Pseudónimo</label>
               <br>
               <input type="text" id="pseudonimo" name="pseudonimo" required="true" />
+            </p>
+            <p>
+              <label for="avatar">Avatar</label>
+              <br>
+              <input type="file" id="avatar" name="avatar">
             </p>
             <p>
               <input class="primary" type="submit" value="Continuar" />

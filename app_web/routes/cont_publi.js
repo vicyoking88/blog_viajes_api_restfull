@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const mysql = require('mysql')
+var path = require('path')
 
 /**POOL DE CONEXIONES A LA BASE DE DATOS */
 var pool = mysql.createPool({
@@ -17,7 +18,7 @@ router.get('/', (request, response) => {
         let consulta
         let modificadorConsulta = ""
         let modificadorPagina = ""
-        let pagina =0
+        let pagina = 0
 
 
         const busqueda = (request.query.busqueda) ? request.query.busqueda : ""
@@ -28,17 +29,17 @@ router.get('/', (request, response) => {
                 resumen LIKE '%${busqueda}%' OR
                 contenido LIKE '%${busqueda}%'
                 `
-                modificadorPagina=""
+            modificadorPagina = ""
         }
 
-        else{
+        else {
 
-            pagina = ( request.query.pagina ) ? parseInt(request.query.pagina) : 0
+            pagina = (request.query.pagina) ? parseInt(request.query.pagina) : 0
             if (pagina < 0) {
-              pagina = 0
+                pagina = 0
             }
             modificadorPagina = `
-              LIMIT 5 OFFSET ${pagina*5}
+              LIMIT 5 OFFSET ${pagina * 5}
             `
 
         }
@@ -105,8 +106,32 @@ router.post('/procesar_registro', (request, response) => {
                     ${connection.escape(pseudonimo)}
                 )`
                         connection.query(consulta, (error, filas, campos) => {
-                            request.flash('mensaje', 'Usuario registrado')
-                            response.redirect('/registro')
+
+                            if (request.files && peticion.files.avatar) {
+
+                                const archivoAvatar = request.files.avatar
+                                const id = filas.insertId
+                                const nombreArchivo = `${id}${path.extname(archivoAvatar.name)}`
+
+                                archivoAvatar.mv(`./public/avatars/${nombreArchivo}`, (error) => {
+
+                                    const consultaAvatar =
+                                        `UPDATE
+                                        autores
+                                        SET avatar = ${connection.escape(nombreArchivo)}
+                                        WHERE id = ${connection.escape(id)}
+                                        `
+                                    connection.query(consultaAvatar, (error, filas, campos) => {
+                                        peticion.flash('mensaje', 'Usuario registrado con avatar')
+                                        respuesta.redirect('/registro')
+                                    })
+
+                                })
+
+                            } else {
+                                request.flash('mensaje', 'Usuario registrado')
+                                response.redirect('/registro')
+                            }
                         })
                     }
                 })
@@ -153,21 +178,21 @@ router.post('/procesar_inicio', function (peticion, respuesta) {
 /**ruta para mostrar detalle de la publicacion al pinchar en ella */
 router.get('/publicacion/:id', (peticion, respuesta) => {
     pool.getConnection((err, connection) => {
-      const consulta = `
+        const consulta = `
         SELECT *
         FROM publicaciones
         WHERE id = ${connection.escape(peticion.params.id)}
       `
-      connection.query(consulta, (error, filas, campos) => {
-        if (filas.length > 0) {
-          respuesta.render('publicacion', { publicacion: filas[0] })
-        }
-        else {
-          respuesta.redirect('/')
-        }
-      })
-      connection.release()
+        connection.query(consulta, (error, filas, campos) => {
+            if (filas.length > 0) {
+                respuesta.render('publicacion', { publicacion: filas[0] })
+            }
+            else {
+                respuesta.redirect('/')
+            }
+        })
+        connection.release()
     })
-  })
+})
 
 module.exports = router

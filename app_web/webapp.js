@@ -5,6 +5,7 @@ const session = require('express-session');
 const mysql = require('mysql');
 const flash = require('express-flash');
 const { request, response } = require('express');
+const fileUpload = require('express-fileupload')
 
 
 aplication.use(bodyparser.json());
@@ -16,6 +17,7 @@ aplication.use(session({
   saveUninitialized: true }));
 aplication.use(flash());
 aplication.use(express.static('public'))
+aplication.use(fileUpload())
 
 /**creamos direccion a rutas */
 const rut_test = require ('./routes/test')
