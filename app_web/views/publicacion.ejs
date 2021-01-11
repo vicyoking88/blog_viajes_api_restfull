@@ -18,7 +18,11 @@
       <div class="col-sm-12">
         <h1>
           <%=publicacion.titulo%>
+          <mark class="tag">
+            <%-publicacion.votos%>
+          </mark>
         </h1>
+        <a href="/publicacion/<%=publicacion.id%>/votar" class="button small primary">+ 1</a>
         <div>
           <%-publicacion.contenido%>
         </div>

@@ -1,7 +1,18 @@
+const { request, response } = require('express')
 const express = require('express')
 const router = express.Router()
 const mysql = require('mysql')
 var path = require('path')
+const nodemailer = require('nodemailer')
+
+/**codigo que envia el correo electronico */
+const transporter = nodemailer.createTransport({
+    service: 'hotmail',
+    auth: {
+      user: 'nigh4@hotmail.com',
+      pass: 'V.amc880503pa'
+    }
+  })
 
 /**POOL DE CONEXIONES A LA BASE DE DATOS */
 var pool = mysql.createPool({
@@ -11,6 +22,18 @@ var pool = mysql.createPool({
     password: '',
     database: 'blog_viajes'
 })
+
+/**funcion que envia el correo */
+function enviarCorreoBienvenida(email, nombre){
+    const opciones = {
+      from: 'nigh4@hotmail.com',
+      to: email,
+      subject: 'Bienvenido al blog de viajes',
+      text: `Hola ${nombre}`
+    }
+    transporter.sendMail(opciones, (error, info) => {
+    });
+  }
 
 /**ROTA A LA WEB PRINCIPAL */
 router.get('/', (request, response) => {
@@ -46,7 +69,7 @@ router.get('/', (request, response) => {
 
         consulta = `
           SELECT
-          publicaciones.id id, titulo, resumen, fecha_hora, pseudonimo, votos
+          publicaciones.id id, titulo, resumen, fecha_hora, pseudonimo, votos, avatar
           FROM publicaciones
           INNER JOIN autores
           ON publicaciones.autor_id = autores.id
@@ -107,7 +130,7 @@ router.post('/procesar_registro', (request, response) => {
                 )`
                         connection.query(consulta, (error, filas, campos) => {
 
-                            if (request.files && peticion.files.avatar) {
+                            if (request.files && request.files.avatar) {
 
                                 const archivoAvatar = request.files.avatar
                                 const id = filas.insertId
@@ -122,13 +145,15 @@ router.post('/procesar_registro', (request, response) => {
                                         WHERE id = ${connection.escape(id)}
                                         `
                                     connection.query(consultaAvatar, (error, filas, campos) => {
-                                        peticion.flash('mensaje', 'Usuario registrado con avatar')
-                                        respuesta.redirect('/registro')
+                                        enviarCorreoBienvenida(email, pseudonimo)
+                                        request.flash('mensaje', 'Usuario registrado con avatar')
+                                        response.redirect('/registro')
                                     })
 
                                 })
 
                             } else {
+                                enviarCorreoBienvenida(email, pseudonimo)
                                 request.flash('mensaje', 'Usuario registrado')
                                 response.redirect('/registro')
                             }
@@ -195,4 +220,72 @@ router.get('/publicacion/:id', (peticion, respuesta) => {
     })
 })
 
+/**ruta con la que se carga el contenido del html de los aurotes y sus publicaciones */
+router.get('/autores', (peticion, respuesta) => {
+    pool.getConnection((err, connection) => {
+      const consulta = `
+        SELECT autores.id id, pseudonimo, avatar, publicaciones.id publicacion_id, titulo
+        FROM autores
+        INNER JOIN
+        publicaciones
+        ON
+        autores.id = publicaciones.autor_id
+        ORDER BY autores.id DESC, publicaciones.fecha_hora DESC
+      `
+      connection.query(consulta, (error, filas, campos) => {
+        autores = []
+        ultimoAutorId = undefined
+        filas.forEach(registro => {
+          if (registro.id != ultimoAutorId){
+            ultimoAutorId = registro.id
+            autores.push({
+              id: registro.id,
+              pseudonimo: registro.pseudonimo,
+              avatar: registro.avatar,
+              publicaciones: []
+            })
+          }
+          autores[autores.length-1].publicaciones.push({
+            id: registro.publicacion_id,
+            titulo: registro.titulo
+          })
+        });
+        respuesta.render('autores', { autores: autores })
+      })
+  
+  
+      connection.release()
+    })
+  })
+
+
+  /**consulta que carga o suma a la casilla votos un voto y lo actualiza */
+  router.get('/publicacion/:id/votar', (peticion, respuesta) => {
+    pool.getConnection((err, connection) => {
+      const consulta = `
+        SELECT *
+        FROM publicaciones
+        WHERE id = ${connection.escape(peticion.params.id)}
+      `
+      connection.query(consulta, (error, filas, campos) => {
+        if (filas.length > 0) {
+          const consultaVoto = `
+            UPDATE publicaciones
+            SET
+            votos = votos + 1
+            WHERE id = ${connection.escape(peticion.params.id)}
+          `
+          connection.query(consultaVoto, (error, filas, campos) => {
+            respuesta.redirect(`/publicacion/${peticion.params.id}`)
+          })
+        }
+        else {
+          peticion.flash('mensaje', 'Publicación inválida')
+          respuesta.redirect('/')
+        }
+      })
+      connection.release()
+    })
+  })
+  
 module.exports = router
