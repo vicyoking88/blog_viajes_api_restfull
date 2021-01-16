@@ -85,4 +85,52 @@ router.get('/api/v1/autores/:id', (request, response) => {
 })
 
 
+/**api para enviar informacion a la db y crear un autor validando que no este repetido correo ni pseudonimo */
+router.post('/api/v1/autores', (request, response) => {
+    pool.getConnection((error, connection) => {
+
+        const query_con_email = `SELECT * FROM autores WHERE email = ${connection.escape(request.body.email)}`
+
+        connection.query(query_con_email, (error, filas, campos) => {
+
+            if (filas.length > 0) {
+                response.status(404)
+                response.send({ errors: ["duplicate mail"] })
+
+            } else {
+
+                const query_pseudonimo = `SELECT * FROM autores WHERE pseudonimo = ${connection.escape(request.body.pseudonimo)}`
+
+                connection.query(query_pseudonimo, (error, filas, campos) => {
+
+                    if (filas.length > 0) {
+                        response.status(404)
+                        response.send({ errors: ["Pseudonimo duplicado"] })
+
+                    } else {
+
+                        const queryInsert = `insert into autores (email, contrasena, pseudonimo) values (${connection.escape(request.body.email)}, ${connection.escape(request.body.contrasena)}, ${connection.escape(request.body.pseudonimo)})`
+
+                        connection.query(queryInsert, (error, filas, campos) => {
+                            const nuevoId = filas.insertId
+                            const queryConsulta = `select*from autores where id=${connection.escape(nuevoId)}`
+                            connection.query(queryConsulta, (error, filas, campos) => {
+                                response.status(201)
+                                response.json({ data: filas[0] })
+                            })
+                        })
+
+                    }
+                })
+
+            }
+
+        })
+
+
+        connection.release()
+    })
+})
+
+
 module.exports = router
