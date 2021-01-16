@@ -133,4 +133,41 @@ router.post('/api/v1/autores', (request, response) => {
 })
 
 
+/**api para enviar query string para nueva publicacion de la base de datos validando que sea un usuario registrado*/
+router.post('/api/v1/publicaciones', (request, response) => {
+    pool.getConnection((error, connection) => {
+
+        const consulEmail = `SELECT*FROM autores WHERE email=${connection.escape(request.query.email)} AND contrasena=${connection.escape(request.query.contrasena)}`
+
+        connection.query(consulEmail, (error, filas, campos) => {
+            let data = filas[0]
+
+            if (!filas.length > 0) {
+                response.status(404)
+                response.send({ errors: ["email o contraseña incorrectos"] })
+
+            } else {
+
+                const insertPubli = `insert into publicaciones (titulo, resumen, contenido, autor_id) values (${connection.escape(request.body.titulo)}, ${connection.escape(request.body.resumen)}, ${connection.escape(request.body.contenido)}, ${data.id})`
+
+                connection.query(insertPubli, (error, filas, campos) => {
+                    const nuevoId = filas.insertId
+                    const queryConsulta = `select*from publicaciones where id=${connection.escape(nuevoId)}`
+
+                    connection.query(queryConsulta, (error, filas, campos) => {
+                        response.status(201)
+                        response.json({ data: filas[0] })
+                    })
+                })
+
+
+
+            }
+        })
+
+        connection.release()
+    })
+})
+
+
 module.exports = router
