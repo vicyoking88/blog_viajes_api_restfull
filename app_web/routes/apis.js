@@ -170,4 +170,59 @@ router.post('/api/v1/publicaciones', (request, response) => {
 })
 
 
+/**api para eliminar una publicacion validando credencial y que sea el dueño */
+router.delete('/api/v1/publicaciones/:id', (request, response) => {
+    pool.getConnection((erro, connection) => {
+
+        const consulEmail = `SELECT*FROM autores WHERE email=${connection.escape(request.query.email)}`
+
+        connection.query(consulEmail, (error, filas, campos) => {
+
+            let data = filas[0]
+
+            if (!filas.length > 0) {
+                response.status(404)
+                response.send({ errors: ["the author does not exist"] })
+
+            } else {
+                const consulcontra = `select*from autores where contrasena= ${connection.escape(request.query.contrasena)}`
+
+                connection.query(consulcontra, (error, filas, campos) => {
+
+                    if (!filas.length > 0) {
+                        response.status(404)
+                        response.send({ errors: ["contraseña invalida"] })
+
+                    } else {
+                        const publicPertene = `SELECT*FROM publicaciones WHERE autor_id=${data.id} AND id=${connection.escape(request.params.id)}`
+
+                        connection.query(publicPertene, (error, filas, camkpos) => {
+                            if (!filas.length > 0) {
+                                response.status(404)
+                                response.send({ errors: ["Esta publicacion no pertenece al usuario identificado"] })
+                            } else {
+                                const publicDelete = `DELETE FROM publicaciones WHERE id=${connection.escape(request.params.id)}`
+
+                                connection.query(publicDelete, (error, filas, campos) => {
+                                    response.status(204)
+                                    response.json()
+
+                                })
+
+                            }
+                        })
+
+
+                    }
+
+                })
+            }
+        })
+
+
+        connection.release()
+    })
+
+})
+
 module.exports = router
