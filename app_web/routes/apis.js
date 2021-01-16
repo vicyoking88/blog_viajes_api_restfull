@@ -64,4 +64,25 @@ router.get('/api/v1/autores', (request, response) => {
     })
 })
 
+
+/**api que me devuelve un autor y sus publicaciones */
+router.get('/api/v1/autores/:id', (request, response) => {
+    pool.getConnection((error, connection) => {
+
+        const query = `select*from autores inner join publicaciones on autores.id=publicaciones.autor_id where autores.id=${connection.escape(request.params.id)}`
+
+        connection.query(query, (error, filas, campos) => {
+            if (filas.length > 0) {
+                response.json({ data: filas })
+            } else {
+                response.status(404)
+                response.send({ errors: ["the author does not exist"] })
+
+            }
+        })
+        connection.release()
+    })
+})
+
+
 module.exports = router
