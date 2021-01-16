@@ -53,5 +53,15 @@ router.get('/api/v1/publicaciones/:id', (request, response) => {
     })
 })
 
+/**api que me devuelve todos los autores */
+router.get('/api/v1/autores', (request, response) => {
+    pool.getConnection((error, connection) => {
+        const query = `select*from autores`
+        connection.query(query, (error, filas, campos) => {
+            response.json({ data: filas })
+        })
+        connection.release()
+    })
+})
 
 module.exports = router
