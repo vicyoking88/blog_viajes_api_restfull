@@ -23,10 +23,12 @@ aplication.use(fileUpload())
 const rut_test = require ('./routes/test')
 const rut_publi = require ('./routes/cont_publi')
 const rut_priva = require('./routes/cont_priva');
+const rut_apis = require('./routes/apis')
 
 aplication.use(rut_test)
 aplication.use(rut_publi)
 aplication.use(rut_priva)
+aplication.use(rut_apis)
 
 
 /**levantar SERVIDOR POR PUERTO 80800 */
