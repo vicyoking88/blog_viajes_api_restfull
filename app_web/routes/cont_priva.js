@@ -5,10 +5,10 @@ const mysql = require('mysql')
 /**POOL DE CONEXIONES A LA BASE DE DATOS */
 var pool = mysql.createPool({
     connectionLimit: 20,
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'blog_viajes'
+    host: 'us-cdbr-east-04.cleardb.com',
+    user: 'b64328a795ff0e',
+    password: '336371f8',
+    database: 'heroku_55a18aa4559fa12'
 })
 
 /**RUTA WEB DE USUARIO despues de que SE CONSULTE EN LA BASE DE DATOS SI EL USUARIO ESTA REGISTRADO CARGAMOS LA PAGINA PRIVADA A LA QUE EL USUARIO PUEDE TENER ACCESO */

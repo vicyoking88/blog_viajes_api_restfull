@@ -17,10 +17,10 @@ const transporter = nodemailer.createTransport({
 /**POOL DE CONEXIONES A LA BASE DE DATOS */
 var pool = mysql.createPool({
     connectionLimit: 20,
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'blog_viajes'
+    host: 'us-cdbr-east-04.cleardb.com',
+    user: 'b64328a795ff0e',
+    password: '336371f8',
+    database: 'heroku_55a18aa4559fa12'
 })
 
 /**funcion que envia el correo */
