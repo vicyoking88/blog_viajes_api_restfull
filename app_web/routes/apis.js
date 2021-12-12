@@ -13,6 +13,7 @@ var pool = mysql.createPool({
     database: 'blog_viajes'
 })
 
+
 /**api me devuelve todas las publicaciones y nos busca la publicacion que contena las palabras del query string */
 router.get('/api/v1/publicaciones', (request, response) => {
     pool.getConnection((error, connection) => {
