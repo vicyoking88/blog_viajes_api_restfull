@@ -32,6 +32,15 @@ aplication.use(rut_apis)
 
 
 /**levantar SERVIDOR POR PUERTO 80800 */
+
 aplication.listen(8080, function () {
     console.log("CORRIENDO SERVIDOR")
 })
+
+
+/*
+const PORT = process.env.PORT || 3000;
+aplication.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}.`);
+});
+*/
